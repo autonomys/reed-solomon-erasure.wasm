@@ -1,6 +1,7 @@
 TODO: Proper documentation
 ```
 wasm-pack build --target nodejs
+ts-node test.ts
 ```
 
 ## License
