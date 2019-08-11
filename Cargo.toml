@@ -1,0 +1,17 @@
+[package]
+name = "reed-solomon-erasure"
+version = "0.1.0"
+authors = ["Nazar Mokrynskyi <nazar@mokrynskyi.com>"]
+
+[dependencies]
+reed-solomon-erasure = { version = "3.1.1", features = ["pure-rust"] }
+wasm-bindgen = "0.2"
+
+[replace]
+"reed-solomon-erasure:3.1.1" = { git = "https://github.com/subspace/reed-solomon-erasure", branch = "remove-rayon", features = ["pure-rust"] }
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = []
