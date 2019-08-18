@@ -14,7 +14,7 @@ interface IWasm {
 
 const currentScript = globalThis.document && globalThis.document.currentScript as HTMLScriptElement | undefined;
 
-export class ReadSolomonErasure {
+export class ReedSolomonErasure {
     public static readonly RESULT_OK = 0;
     public static readonly RESULT_ERROR_TOO_FEW_SHARDS = 1;
     public static readonly RESULT_ERROR_TOO_MANY_SHARDS = 2;
@@ -33,25 +33,25 @@ export class ReadSolomonErasure {
     /**
      * Automagical method that will try to detect environment (Node.js or browser) and load *.wasm file from current directory
      */
-    public static async fromCurrentDirectory(): Promise<ReadSolomonErasure> {
+    public static async fromCurrentDirectory(): Promise<ReedSolomonErasure> {
         if (currentScript) {
             const pathToCurrentScript = currentScript.src.split('/').slice(0, -1).join('/');
-            return ReadSolomonErasure.fromResponse(await fetch(`${pathToCurrentScript}/reed_solomon_erasure_bg.wasm`));
+            return ReedSolomonErasure.fromResponse(await fetch(`${pathToCurrentScript}/reed_solomon_erasure_bg.wasm`));
         } else {
-            return ReadSolomonErasure.fromBytes(readFileSync(`${__dirname}/reed_solomon_erasure_bg.wasm`));
+            return ReedSolomonErasure.fromBytes(readFileSync(`${__dirname}/reed_solomon_erasure_bg.wasm`));
         }
     }
 
-    public static async fromResponse(source: Response): Promise<ReadSolomonErasure> {
+    public static async fromResponse(source: Response): Promise<ReedSolomonErasure> {
         // @ts-ignore WebAssembly.instantiateStreaming is not known by TypeScript yet
         const instance: WebAssembly.Instance = await WebAssembly.instantiateStreaming(source);
-        return new ReadSolomonErasure(instance.exports as IWasm);
+        return new ReedSolomonErasure(instance.exports as IWasm);
     }
 
-    public static fromBytes(bytes: BufferSource): ReadSolomonErasure {
+    public static fromBytes(bytes: BufferSource): ReedSolomonErasure {
         const module = new WebAssembly.Module(bytes);
         const instance = new WebAssembly.Instance(module);
-        return new ReadSolomonErasure(instance.exports as IWasm);
+        return new ReedSolomonErasure(instance.exports as IWasm);
     }
 
     private memoryCache: Uint8Array | null = null;
@@ -79,7 +79,7 @@ export class ReadSolomonErasure {
         const shardSize = shardsLength / (dataShards + parityShards);
         const result = exports.encode(shardsPointer, shardsLength, dataShards, parityShards);
 
-        if (result === ReadSolomonErasure.RESULT_OK) {
+        if (result === ReedSolomonErasure.RESULT_OK) {
             shards.set(
                 this.getUint8Memory().subarray(shardsPointer + shardSize * dataShards, shardsPointer + shardsLength),
                 shardSize * dataShards,
@@ -127,7 +127,7 @@ export class ReadSolomonErasure {
             shardsAvailableLength,
         );
 
-        if (result === ReadSolomonErasure.RESULT_OK) {
+        if (result === ReedSolomonErasure.RESULT_OK) {
             shards.set(
                 this.getUint8Memory().subarray(shardsPointer, shardsPointer + shardSize * dataShards),
             );

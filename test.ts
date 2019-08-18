@@ -1,12 +1,12 @@
 /* tslint:disable:no-console */
-import {ReadSolomonErasure} from "./src";
+import {ReedSolomonErasure} from "./src";
 
 const SHARD_SIZE = 4;
 const DATA_SHARDS = 4;
 const PARITY_SHARDS = 2;
 
 (async () => {
-    const reedSolomonErasure = await ReadSolomonErasure.fromCurrentDirectory();
+    const reedSolomonErasure = await ReedSolomonErasure.fromCurrentDirectory();
 
     const input = Uint8Array.of(
         1, 2, 3, 4,
