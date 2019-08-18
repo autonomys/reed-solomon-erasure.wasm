@@ -1,6 +1,6 @@
 [package]
 name = "reed-solomon-erasure"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Nazar Mokrynskyi <nazar@mokrynskyi.com>"]
 description = "Rust implementation of read-solomon erasure-coding compiled to Web Assembly"
 repository = "git://github.com/subspace/reed-solomon-erasure.wasm.git"
