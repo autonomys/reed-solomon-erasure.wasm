@@ -1,6 +1,6 @@
 TODO: Proper documentation
 ```
-wasm-pack build --target nodejs
+npm run build
 ts-node test.ts
 ```
 

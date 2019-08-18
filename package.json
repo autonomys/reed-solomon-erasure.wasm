@@ -1,0 +1,37 @@
+{
+  "name": "@subspace/reed-solomon-erasure.wasm",
+  "collaborators": [
+    "Nazar Mokrynskyi <nazar@mokrynskyi.com>"
+  ],
+  "description": "Rust implementation of read-solomon erasure-coding compiled to Web Assembly",
+  "version": "0.2.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/subspace/reed-solomon-erasure.wasm.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run clean && npm run lint && npm run compile-wasm && npm run compile && npm run copy-wasm && npm run minify",
+    "compile-wasm": "wasm-pack build --release --out-dir wasm-build && cp wasm-build/reed_solomon_erasure_bg.wasm src/ && rm -rf wasm-build",
+    "clean": "rm -rf dist",
+    "compile": "tsc -b",
+    "lint": "tslint --project .",
+    "copy-wasm": "cp src/*.wasm dist/",
+    "minify": "terser --compress --mangle -- dist/index.js > dist/index.min.js"
+  },
+  "dependencies": {
+    "@types/node": "^12.7.2"
+  },
+  "devDependencies": {
+    "@types/tape": "^4.2.33",
+    "tape": "^4.11.0",
+    "terser": "^4.1.4",
+    "tslint": "^5.18.0",
+    "typescript": "^3.5.3"
+  }
+}

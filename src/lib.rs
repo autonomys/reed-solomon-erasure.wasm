@@ -41,9 +41,6 @@ fn result_to_number(result: Result<(), Error>) -> u8 {
     };
 }
 
-/// Takes a contiguous array of bytes that contain space for `data_shards + parity_shards` shards
-/// with `data_shards` shards containing data and fills additional `parity_shards` with parity
-/// information that can be later used to reconstruct data in case of corruption
 #[wasm_bindgen]
 pub fn encode(shards: &mut [u8], data_shards: usize, parity_shards: usize) -> u8 {
     let reed_solomon = ReedSolomon::new(data_shards, parity_shards).unwrap();
@@ -58,10 +55,6 @@ pub fn encode(shards: &mut [u8], data_shards: usize, parity_shards: usize) -> u8
     );
 }
 
-/// Takes a contiguous array of bytes that contain `data_shards + parity_shards` shards and tries to
-/// reconstruct data shards if they are broken and whenever possible using information from
-/// `shards_available` (contains `data_shards + parity_shards` numbers, each of which is either `1`
-/// if shard is not corrupted or `0` if it is)
 #[wasm_bindgen]
 pub fn reconstruct(
     shards: &mut [u8],
