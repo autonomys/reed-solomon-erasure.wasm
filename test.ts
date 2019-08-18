@@ -1,14 +1,8 @@
-import {encode, memory, reconstruct} from "./pkg/reed_solomon_erasure_bg";
-
-function setMemory(value: ArrayLike<number>, offset?: number): void {
-    (new Uint8Array(memory.buffer)).set(value, offset);
-}
+import {encode, reconstruct} from "./pkg";
 
 const SHARD_SIZE = 4;
 const DATA_SHARDS = 4;
 const PARITY_SHARDS = 2;
-const SHARDS_ADDRESS = 0;
-const SHARDS_AVAILABLE_ADDRESS = SHARDS_ADDRESS + SHARD_SIZE * (DATA_SHARDS * PARITY_SHARDS);
 
 const input = Uint8Array.of(
     1, 2, 3, 4,
@@ -20,21 +14,18 @@ const input = Uint8Array.of(
 const shards = new Uint8Array(SHARD_SIZE * (DATA_SHARDS + PARITY_SHARDS));
 shards.set(input.slice());
 
-setMemory(shards, SHARDS_ADDRESS);
-
 console.log(
     'Encoding success: expect 0, result',
-    encode(SHARDS_ADDRESS, SHARD_SIZE, DATA_SHARDS, PARITY_SHARDS),
+    encode(shards, DATA_SHARDS, PARITY_SHARDS),
 );
 
-setMemory([0, 0, 0, 0], 0);
-setMemory([0, 0, 0, 0], SHARD_SIZE);
+const corrupted_shards = shards.slice();
+corrupted_shards.set([0, 0, 0, 0], 0);
+corrupted_shards.set([0, 0, 0, 0], SHARD_SIZE);
 
 console.log('Corrupted shards 0 and 1');
 
-setMemory(Uint8Array.of(0, 0, 1, 1, 1, 1), SHARDS_AVAILABLE_ADDRESS);
-
-const result = reconstruct(SHARDS_ADDRESS, SHARD_SIZE, DATA_SHARDS, PARITY_SHARDS, SHARDS_AVAILABLE_ADDRESS);
+const result = reconstruct(corrupted_shards, DATA_SHARDS, PARITY_SHARDS, Uint8Array.of(0, 0, 1, 1, 1, 1));
 
 console.log(
     'Reconstructing corrupted data shards: expect 0, result',
@@ -46,5 +37,5 @@ console.log(
 );
 console.log(
     'Reconstructed data shards:',
-    (new Uint8Array(memory.buffer)).slice(SHARDS_ADDRESS, SHARDS_ADDRESS + SHARD_SIZE * DATA_SHARDS).join(', '),
+    corrupted_shards.slice(0, SHARD_SIZE * DATA_SHARDS).join(', '),
 );

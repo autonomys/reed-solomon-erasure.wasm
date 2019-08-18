@@ -3,44 +3,53 @@ extern crate wasm_bindgen;
 
 use reed_solomon_erasure::*;
 use wasm_bindgen::prelude::*;
-use std::slice;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+pub const RESULT_OK: u8 = 0;
+pub const RESULT_ERROR_TOO_FEW_SHARDS: u8 = 1;
+pub const RESULT_ERROR_TOO_MANY_SHARDS: u8 = 2;
+pub const RESULT_ERROR_TOO_FEW_DATA_SHARDS: u8 = 3;
+pub const RESULT_ERROR_TOO_MANY_DATA_SHARDS: u8 = 4;
+pub const RESULT_ERROR_TOO_FEW_PARITY_SHARDS: u8 = 5;
+pub const RESULT_ERROR_TOO_MANY_PARITY_SHARDS: u8 = 6;
+pub const RESULT_ERROR_TOO_FEW_BUFFER_SHARDS: u8 = 7;
+pub const RESULT_ERROR_TOO_MANY_BUFFER_SHARDS: u8 = 8;
+pub const RESULT_ERROR_INCORRECT_SHARD_SIZE: u8 = 9;
+pub const RESULT_ERROR_TOO_FEW_SHARDS_PRESENT: u8 = 10;
+pub const RESULT_ERROR_EMPTY_SHARD: u8 = 11;
+pub const RESULT_ERROR_INVALID_SHARD_FLAGS: u8 = 12;
+pub const RESULT_ERROR_INVALID_INDEX: u8 = 13;
+
 fn result_to_number(result: Result<(), Error>) -> u8 {
     return match result {
-        Ok(()) => 0,
-        Err(Error::TooFewShards) => 1,
-        Err(Error::TooManyShards) => 2,
-        Err(Error::TooFewDataShards) => 3,
-        Err(Error::TooManyDataShards) => 4,
-        Err(Error::TooFewParityShards) => 5,
-        Err(Error::TooManyParityShards) => 6,
-        Err(Error::TooFewBufferShards) => 7,
-        Err(Error::TooManyBufferShards) => 8,
-        Err(Error::IncorrectShardSize) => 9,
-        Err(Error::TooFewShardsPresent) => 10,
-        Err(Error::EmptyShard) => 11,
-        Err(Error::InvalidShardFlags) => 12,
-        Err(Error::InvalidIndex) => 13,
+        Ok(()) => RESULT_OK,
+        Err(Error::TooFewShards) => RESULT_ERROR_TOO_FEW_SHARDS,
+        Err(Error::TooManyShards) => RESULT_ERROR_TOO_MANY_SHARDS,
+        Err(Error::TooFewDataShards) => RESULT_ERROR_TOO_FEW_DATA_SHARDS,
+        Err(Error::TooManyDataShards) => RESULT_ERROR_TOO_MANY_DATA_SHARDS,
+        Err(Error::TooFewParityShards) => RESULT_ERROR_TOO_FEW_PARITY_SHARDS,
+        Err(Error::TooManyParityShards) => RESULT_ERROR_TOO_MANY_PARITY_SHARDS,
+        Err(Error::TooFewBufferShards) => RESULT_ERROR_TOO_FEW_BUFFER_SHARDS,
+        Err(Error::TooManyBufferShards) => RESULT_ERROR_TOO_MANY_BUFFER_SHARDS,
+        Err(Error::IncorrectShardSize) => RESULT_ERROR_INCORRECT_SHARD_SIZE,
+        Err(Error::TooFewShardsPresent) => RESULT_ERROR_TOO_FEW_SHARDS_PRESENT,
+        Err(Error::EmptyShard) => RESULT_ERROR_EMPTY_SHARD,
+        Err(Error::InvalidShardFlags) => RESULT_ERROR_INVALID_SHARD_FLAGS,
+        Err(Error::InvalidIndex) => RESULT_ERROR_INVALID_INDEX,
     };
 }
 
-/**
- * `shards` must have enough of space allocated to hold `shard_size * (data_shards + parity_shards)`
- * bytes with `shard_size * data_shards` already filled with data
- */
+/// Takes a contiguous array of bytes that contain space for `data_shards + parity_shards` shards
+/// with `data_shards` shards containing data and fills additional `parity_shards` with parity
+/// information that can be later used to reconstruct data in case of corruption
 #[wasm_bindgen]
-pub fn encode(shards: *mut u8, shard_size: usize, data_shards: usize, parity_shards: usize) -> u8 {
+pub fn encode(shards: &mut [u8], data_shards: usize, parity_shards: usize) -> u8 {
     let reed_solomon = ReedSolomon::new(data_shards, parity_shards).unwrap();
-    let total_shards = data_shards + parity_shards;
-    let total_bytes = shard_size * total_shards;
+    let shard_size = shards.len() / (data_shards + parity_shards);
 
-    let shards_slice = unsafe {
-        slice::from_raw_parts_mut(shards, total_bytes)
-    };
-    let mut separate_slice_shards: Vec<_> = shards_slice
+    let mut separate_slice_shards: Vec<_> = shards
         .chunks_exact_mut(shard_size)
         .collect();
 
@@ -49,33 +58,35 @@ pub fn encode(shards: *mut u8, shard_size: usize, data_shards: usize, parity_sha
     );
 }
 
-/**
- * `shards` must have enough of space allocated to hold `shard_size * (data_shards + parity_shards)`
- * bytes with shards that are available filled with data and specified in `shards_available`
- * argument
- */
+/// Takes a contiguous array of bytes that contain `data_shards + parity_shards` shards and tries to
+/// reconstruct data shards if they are broken and whenever possible using information from
+/// `shards_available` (contains `data_shards + parity_shards` numbers, each of which is either `1`
+/// if shard is not corrupted or `0` if it is)
 #[wasm_bindgen]
-pub fn reconstruct(shards: *mut u8, shard_size: usize, data_shards: usize, parity_shards: usize, shards_available: *const u8) -> u8 {
+pub fn reconstruct(
+    shards: &mut [u8],
+    data_shards: usize,
+    parity_shards: usize,
+    shards_available: &[u8]
+) -> u8 {
     let reed_solomon = ReedSolomon::new(data_shards, parity_shards).unwrap();
-    let total_shards = data_shards + parity_shards;
-    let total_bytes = shard_size * total_shards;
+    let shard_size = shards.len() / (data_shards + parity_shards);
 
-    let shards_slice = unsafe {
-        slice::from_raw_parts_mut(shards, total_bytes)
-    };
-    let mut separate_slice_shards: Vec<_> = shards_slice
+    let mut separate_slice_shards: Vec<_> = shards
         .chunks_exact_mut(shard_size)
         .collect();
-    let shards_available_slice: Vec<bool> = unsafe {
-        slice::from_raw_parts(shards_available, total_shards)
-            .iter()
-            .map(|&num| {
-                num == 1u8
-            })
-            .collect()
-    };
+
+    let shards_available_slice: Vec<_> = shards_available
+        .iter()
+        .map(|&num| {
+            num == 1u8
+        })
+        .collect();
 
     return result_to_number(
-        reed_solomon.reconstruct_data(&mut separate_slice_shards, &shards_available_slice)
+        reed_solomon.reconstruct_data(
+            &mut separate_slice_shards,
+            &shards_available_slice
+        )
     );
 }
