@@ -16,10 +16,11 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run clean && npm run lint && npm run compile-wasm && npm run compile && npm run copy-wasm && npm run minify",
+    "build": "npm run clean && npm run lint && npm run compile-wasm && npm run compile && npm run fix-currentScript && npm run copy-wasm && npm run minify",
     "compile-wasm": "wasm-pack build --release --out-dir wasm-build && cp wasm-build/reed_solomon_erasure_bg.wasm src/ && rm -rf wasm-build",
     "clean": "rm -rf dist",
     "compile": "tsc -b",
+    "fix-currentScript": "LINE_TO_MOVE='globalThis.document.currentScript' && LINE=$(grep $LINE_TO_MOVE dist/index.js) && echo \"$LINE\\n$(grep -v $LINE_TO_MOVE dist/index.js)\" > dist/index.js",
     "lint": "tslint --project .",
     "copy-wasm": "cp src/*.wasm dist/",
     "minify": "terser --compress --mangle -- dist/index.js > dist/index.min.js"
