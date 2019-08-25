@@ -39,7 +39,12 @@ corruptedShards.set([0, 0, 0, 0], SHARD_SIZE);
 
 console.log('Corrupted shards 0 and 1');
 
-const result = reedSolomonErasure.reconstruct(corruptedShards, DATA_SHARDS, PARITY_SHARDS, [false, false, true, true, true, true]);
+const result = reedSolomonErasure.reconstruct(
+    corruptedShards,
+    DATA_SHARDS,
+    PARITY_SHARDS,
+    [false, false, true, true, true, true],
+);
 
 console.log(
     'Reconstructing corrupted data shards: expect 0, result',
