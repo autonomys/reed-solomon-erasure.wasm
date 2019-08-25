@@ -1,10 +1,16 @@
 {
   "name": "@subspace/reed-solomon-erasure.wasm",
-  "collaborators": [
-    "Nazar Mokrynskyi <nazar@mokrynskyi.com>"
-  ],
+  "author": "Nazar Mokrynskyi <nazar@mokrynskyi.com>",
   "description": "Rust implementation of read-solomon erasure-coding compiled to Web Assembly",
-  "version": "0.2.2",
+  "keywords" : [
+    "reed-solomon",
+    "erasure coding",
+    "parify",
+    "shard",
+    "error correction",
+    "ecc"
+  ],
+  "version": "0.2.3",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -23,7 +29,9 @@
     "fix-currentScript": "LINE_TO_MOVE='globalThis.document.currentScript' && LINE=$(grep $LINE_TO_MOVE dist/index.js) && echo \"$LINE\\n$(grep -v $LINE_TO_MOVE dist/index.js)\" > dist/index.js",
     "lint": "tslint --project .",
     "copy-wasm": "cp src/*.wasm dist/",
-    "minify": "terser --compress --mangle -- dist/index.js > dist/index.min.js"
+    "minify": "terser --compress --mangle -- dist/index.js > dist/index.min.js",
+    "test": "npm run lint && ts-node node_modules/.bin/tape tests/**/*.ts",
+    "build-and-publish": "npm run build && npm publish"
   },
   "dependencies": {
     "@types/node": "^12.7.2"
