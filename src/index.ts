@@ -42,12 +42,18 @@ export class ReedSolomonErasure {
         }
     }
 
+    /**
+     * For asynchronous instantiation, primarily in Browser environment, expects you to load WASM file with `fetch()`
+     */
     public static async fromResponse(source: Response): Promise<ReedSolomonErasure> {
         // @ts-ignore WebAssembly.instantiateStreaming is not known by TypeScript yet
         const instance: WebAssembly.Instance = await WebAssembly.instantiateStreaming(source);
         return new ReedSolomonErasure(instance.exports as IWasm);
     }
 
+    /**
+     * For synchronous instantiation, primarily in Node.js environment
+     */
     public static fromBytes(bytes: BufferSource): ReedSolomonErasure {
         const module = new WebAssembly.Module(bytes);
         const instance = new WebAssembly.Instance(module);
@@ -67,7 +73,7 @@ export class ReedSolomonErasure {
      * @param dataShards
      * @param parityShards
      *
-     * @returns One of `RESULT_*` constants; if `RESULT_OK` then parity shards were updated in `shards`
+     * @returns One of `RESULT_*` constants; if `RESULT_OK` then parity shards were updated in `shards` in-place
      */
     public encode(shards: Uint8Array, dataShards: number, parityShards: number): number {
         const exports = this.exports;
@@ -93,15 +99,15 @@ export class ReedSolomonErasure {
 
     /**
      * Takes a contiguous array of bytes that contain `data_shards + parity_shards` shards and tries to reconstruct data shards if they are broken and whenever
-     * possible using information from `shards_available` (contains `data_shards + parity_shards` numbers, each of which is either `1` if shard is not corrupted
-     * or `0` if it is)
+     * possible using information from `shards_available` (contains `data_shards + parity_shards` boolean values, each of which is either `true` if shard is not
+     * corrupted or `false` if it is)
      *
      * @param shards
      * @param dataShards
      * @param parityShards
      * @param shardsAvailable
      *
-     * @returns One of `RESULT_*` constants; if `RESULT_OK` then data shards were reconstructed in `shards`
+     * @returns One of `RESULT_*` constants; if `RESULT_OK` then data shards were reconstructed in `shards` in-place
      */
     public reconstruct(shards: Uint8Array, dataShards: number, parityShards: number, shardsAvailable: boolean[]): number {
         const exports = this.exports;
