@@ -36,7 +36,7 @@ export class ReedSolomonErasure {
     public static async fromCurrentDirectory(): Promise<ReedSolomonErasure> {
         if (currentScript) {
             const pathToCurrentScript = currentScript.src.split('/').slice(0, -1).join('/');
-            return ReedSolomonErasure.fromResponse(await fetch(`${pathToCurrentScript}/reed_solomon_erasure_bg.wasm`));
+            return ReedSolomonErasure.fromResponse(fetch(`${pathToCurrentScript}/reed_solomon_erasure_bg.wasm`));
         } else {
             return ReedSolomonErasure.fromBytes(readFileSync(`${__dirname}/reed_solomon_erasure_bg.wasm`));
         }
@@ -45,9 +45,9 @@ export class ReedSolomonErasure {
     /**
      * For asynchronous instantiation, primarily in Browser environment, expects you to load WASM file with `fetch()`
      */
-    public static async fromResponse(source: Response): Promise<ReedSolomonErasure> {
+    public static async fromResponse(source: Response | Promise<Response>): Promise<ReedSolomonErasure> {
         // @ts-ignore WebAssembly.instantiateStreaming is not known by TypeScript yet
-        const instance: WebAssembly.Instance = await WebAssembly.instantiateStreaming(source);
+        const {instance}: {instance: WebAssembly.Instance} = await WebAssembly.instantiateStreaming(source);
         return new ReedSolomonErasure(instance.exports as IWasm);
     }
 
